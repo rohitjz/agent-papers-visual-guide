@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>From text to agents | A visual paper lab</title>
+  <link rel="icon" href="data:,">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 16px/1.6 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+    button, select, input { font: inherit; }
+    button, select { min-height: 44px; }
+    button, a, select, input[type="range"], input[type="checkbox"] { cursor: pointer; }
+    button { color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); border-radius: 10px; padding: 8px 16px; transition: background .15s, border-color .15s; }
+    button:hover:not(:disabled) { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+    button:disabled { cursor: default; color: var(--cp-text-muted); border-color: var(--cp-border); }
+    button.primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); font-weight: 600; }
+    button.primary:hover:not(:disabled) { background: var(--cp-accent-hover); }
+    a { color: var(--cp-link); text-underline-offset: 4px; }
+    :focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 4px; }
+    .skip { position: absolute; top: -100px; left: 16px; padding: 12px; background: var(--cp-surface); z-index: 20; }
+    .skip:focus { top: 12px; }
+    header { border-bottom: 1px solid var(--cp-border); background: var(--cp-bg-elevated); }
+    .topbar { max-width: 1440px; margin: auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand svg { color: var(--cp-accent); flex: none; }
+    .brand strong { display: block; letter-spacing: -.02em; }
+    .brand small { display: block; font-size: 12px; color: var(--cp-text-muted); letter-spacing: .08em; text-transform: uppercase; }
+    .top-actions { display: flex; gap: 8px; }
+    .shell { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 260px minmax(0,1fr); }
+    aside { padding: 32px 20px 32px 32px; border-right: 1px solid var(--cp-border); }
+    .sidebar-inner { position: sticky; top: 24px; max-height: calc(100vh - 136px); overflow-y: auto; padding-right: 4px; }
+    .eyebrow { font-size: 12px; letter-spacing: .11em; text-transform: uppercase; font-weight: 700; color: var(--cp-accent); }
+    .nav-label { font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--cp-text-muted); margin: 24px 0 8px; }
+    nav { display: grid; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px; border-radius: 10px; text-decoration: none; color: var(--cp-text-muted); font-size: 14px; border: 1px solid transparent; }
+    .nav-item:hover { background: var(--cp-surface); color: var(--cp-text); }
+    .nav-item[aria-current="page"] { color: var(--cp-accent); background: var(--cp-accent-soft); border-color: var(--cp-accent); font-weight: 600; }
+    .nav-number { font: 12px Consolas, "Courier New", Courier, monospace; min-width: 22px; }
+    .checkmark { margin-left: auto; color: var(--cp-accent); font-size: 12px; font-weight: 700; }
+    .progress-label { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin: 12px 0 8px; color: var(--cp-text-muted); }
+    progress { width: 100%; height: 5px; accent-color: var(--cp-accent); }
+    progress::-webkit-progress-bar { background: var(--cp-border); border-radius: 4px; }
+    progress::-webkit-progress-value { background: var(--cp-accent); border-radius: 4px; }
+    .sidebar-note { color: var(--cp-text-muted); font-size: 13px; margin-top: 24px; }
+    main { min-width: 0; padding: 40px 48px 48px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(32px,3.4vw,52px); line-height: 1.08; font-weight: 650; letter-spacing: -.045em; max-width: 780px; margin: 12px 0 20px; text-wrap: balance; }
+    h2 { font-size: 23px; line-height: 1.3; font-weight: 600; letter-spacing: -.02em; margin-bottom: 16px; }
+    h3 { font-size: 16px; line-height: 1.4; margin-bottom: 8px; }
+    p { margin-bottom: 16px; }
+    .lead { font-size: 19px; line-height: 1.55; color: var(--cp-text-muted); max-width: 740px; margin-bottom: 20px; }
+    .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+    .tag { font-size: 12px; background: var(--cp-surface); border: 1px solid var(--cp-border); padding: 4px 10px; border-radius: 6px; color: var(--cp-text-muted); }
+    .tag.accent { color: var(--cp-accent); background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+    .lab { border: 1px solid var(--cp-border-strong); border-radius: 16px; overflow: hidden; background: var(--cp-surface); margin-bottom: 36px; }
+    .lab-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid var(--cp-border); padding: 16px 24px; background: var(--cp-bg-elevated); }
+    .lab-header h2 { font-size: 16px; margin: 0; }
+    .small { font-size: 13px; color: var(--cp-text-muted); }
+    .lab-body { padding: 24px; }
+    .lab-hint { font-size: 14px; color: var(--cp-text-muted); margin-bottom: 20px; }
+    .flow { display: flex; align-items: stretch; gap: 12px; }
+    .node { flex: 1; min-width: 0; padding: 16px; border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface-soft); }
+    .node strong { display: block; font-size: 16px; line-height: 1.35; margin: 4px 0 8px; }
+    .node p { font-size: 14px; margin: 0; }
+    .node .kicker { font: 11px/1.4 Consolas, "Courier New", Courier, monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--cp-text-muted); }
+    .node.active { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+    .node.dim { border-style: dashed; color: var(--cp-text-muted); }
+    .connector { align-self: center; flex: none; color: var(--cp-accent); font-size: 24px; line-height: 1; }
+    .callout { border-left: 3px solid var(--cp-accent); padding: 12px 16px; background: var(--cp-accent-soft); margin-top: 20px; font-size: 14px; }
+    .callout p:last-child { margin-bottom: 0; }
+    .caption { display: grid; grid-template-columns: 32px minmax(0,1fr); gap: 12px; padding: 20px 24px; border-top: 1px solid var(--cp-border); background: var(--cp-bg-elevated); min-height: 108px; }
+    .step-num { color: var(--cp-accent); font: 22px/1.4 Consolas, "Courier New", Courier, monospace; }
+    .caption h3 { margin-bottom: 4px; }
+    .caption p { color: var(--cp-text-muted); font-size: 14px; margin: 0; }
+    .lab-controls { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-top: 1px solid var(--cp-border); gap: 12px; }
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .step-dots { display: flex; gap: 6px; }
+    .step-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--cp-border-strong); }
+    .step-dots span.on { background: var(--cp-accent); }
+    .tweaks { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; padding: 16px; background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 10px; margin-bottom: 20px; }
+    .tweaks label { display: grid; gap: 4px; font-size: 13px; flex: 1; min-width: 140px; }
+    select { width: 100%; color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); border-radius: 8px; padding: 8px; }
+    input[type="range"] { width: 100%; min-height: 36px; accent-color: var(--cp-accent); }
+    .tweaks label.checkbox { display: flex; align-items: center; min-height: 44px; gap: 12px; }
+    input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--cp-accent); }
+    .mono, code, pre { font-family: Consolas, "Courier New", Courier, monospace; }
+    pre { font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-radius: 10px; padding: 16px; margin: 12px 0 0; }
+    .equation { font: 600 clamp(22px,3vw,36px)/1.4 Consolas, "Courier New", Courier, monospace; color: var(--cp-accent); text-align: center; padding: 20px 12px; }
+    .split { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .split > * { min-width: 0; }
+    .stack { display: grid; gap: 12px; }
+    .memory-row { display: grid; grid-template-columns: minmax(0,1fr) 64px; gap: 12px; align-items: center; }
+    .memory-row span { font: 16px Consolas, "Courier New", Courier, monospace; color: var(--cp-accent); text-align: right; }
+    .town { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+    .person { padding: 20px 12px; border: 1px solid var(--cp-border); border-radius: 10px; text-align: center; background: var(--cp-bg-elevated); font-size: 14px; }
+    .person b { display: block; font-size: 16px; }
+    .person svg { width: 36px; height: 36px; color: var(--cp-accent); margin-bottom: 8px; }
+    .tree-root { max-width: 320px; margin: 0 auto 16px; text-align: center; }
+    .tree-branches { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; position: relative; }
+    .tree-branches:before { content: ""; position: absolute; top: -8px; left: 25%; right: 25%; border-top: 1px solid var(--cp-border-strong); }
+    .branch { text-align: center; }
+    .branch button { width: 100%; text-align: center; }
+    .branch button[aria-pressed="true"] { border-color: var(--cp-accent); color: var(--cp-accent); background: var(--cp-accent-soft); }
+    .branch .node { margin-top: 12px; text-align: left; }
+    .message { display: grid; grid-template-columns: 80px minmax(0,1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cp-border); font-size: 14px; }
+    .message:last-child { border-bottom: 0; }
+    .message b { color: var(--cp-accent); }
+    .principle { margin-bottom: 32px; }
+    .deduction { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+    .deduction > div { border-top: 1px solid var(--cp-border-strong); padding-top: 12px; }
+    .deduction .number { font: 12px Consolas, "Courier New", Courier, monospace; color: var(--cp-accent); display: block; margin-bottom: 8px; }
+    .deduction p { font-size: 15px; color: var(--cp-text-muted); margin: 0; }
+    .explain { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; margin-bottom: 32px; }
+    .explain p, .explain li { font-size: 15px; }
+    .explain ul { padding-left: 20px; margin: 0; }
+    .explain li { margin-bottom: 8px; }
+    .limit { padding: 20px; background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 10px; }
+    .limit p { color: var(--cp-text-muted); margin-bottom: 12px; }
+    details { border-top: 1px solid var(--cp-border); padding: 12px 0; }
+    summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+    summary:before { content: "+"; color: var(--cp-accent); font: 20px Consolas, "Courier New", Courier, monospace; }
+    details[open] summary:before { content: "-"; }
+    details p { margin-top: 8px; color: var(--cp-text-muted); font-size: 14px; }
+    .quiz { padding: 24px; border: 1px solid var(--cp-border); background: var(--cp-surface); border-radius: 16px; margin-top: 24px; }
+    .quiz h2 { margin-bottom: 8px; }
+    .quiz .question { font-size: 17px; margin-bottom: 16px; }
+    .options { display: grid; gap: 8px; }
+    .option { text-align: left; display: flex; align-items: center; gap: 12px; }
+    .option span { font: 12px Consolas, "Courier New", Courier, monospace; color: var(--cp-text-muted); }
+    .option[aria-pressed="true"] { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+    .feedback { padding: 12px 16px; background: var(--cp-bg-elevated); border-left: 3px solid var(--cp-accent); margin-top: 16px; font-size: 14px; }
+    .feedback:empty { display: none; }
+    .recall { margin-top: 20px; }
+    .recall summary { font-size: 14px; }
+    .source { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--cp-border); font-size: 13px; color: var(--cp-text-muted); }
+    .source a { display: inline-block; min-height: 44px; padding-top: 8px; }
+    .lesson-footer { margin-top: 32px; display: flex; justify-content: space-between; gap: 12px; padding-top: 24px; border-top: 1px solid var(--cp-border); }
+    .route-strip { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+    .route-strip button { text-align: left; }
+    .route-strip button[aria-pressed="true"] { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+    .route-strip small { display: block; color: var(--cp-text-muted); font-size: 12px; margin-top: 4px; }
+    .comparison { margin-top: 24px; }
+    .comparison-row { display: grid; grid-template-columns: 160px minmax(0,1fr) 120px; gap: 16px; padding: 16px 0; border-top: 1px solid var(--cp-border); align-items: start; font-size: 14px; }
+    .comparison-row a { font-weight: 600; color: var(--cp-accent); }
+    .comparison-row span { color: var(--cp-text-muted); }
+    .glossary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .glossary p { font-size: 14px; }
+    .empty { min-height: 100px; display: flex; align-items: center; justify-content: center; color: var(--cp-text-muted); font-size: 14px; border: 1px dashed var(--cp-border-strong); border-radius: 10px; padding: 16px; }
+    .mobile-picker { display: none; }
+    .nojs { padding: 24px; }
+    html[data-theme="dark"] :is(button:disabled, .brand small, .nav-label, .nav-item:not([aria-current]), .progress-label, .sidebar-note, .lead, .tag:not(.accent), .small, .lab-hint, .node .kicker, .node.dim, .caption p, .tweaks label, .deduction p, .limit p, details p, .source, .route-strip small, .comparison-row span, .option span, .empty, .mobile-picker label) {
+      color: var(--cp-text-soft);
+    }
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 232px minmax(0,1fr); }
+      main { padding: 32px; }
+      aside { padding-left: 20px; }
+      .deduction { gap: 12px; }
+    }
+    @media (max-width: 760px) {
+      .topbar { padding: 12px 16px; }
+      .brand small { font-size: 10px; }
+      .top-actions button { padding: 8px 10px; font-size: 13px; }
+      .shell { display: block; }
+      aside { display: none; }
+      .mobile-picker { display: block; background: var(--cp-bg-elevated); padding: 12px 16px; border-bottom: 1px solid var(--cp-border); }
+      .mobile-picker label { display: block; color: var(--cp-text-muted); font-size: 12px; margin-bottom: 4px; }
+      main { padding: 28px 16px 32px; }
+      h1 { font-size: 36px; }
+      .lead { font-size: 17px; }
+      .lab-header, .lab-body, .quiz { padding: 16px; }
+      .lab-header { align-items: start; }
+      .lab-header .small { max-width: 110px; text-align: right; font-size: 11px; }
+      .caption { padding: 16px; min-height: 130px; }
+      .lab-controls { padding: 12px 16px; flex-wrap: wrap; }
+      .lab-controls .step-dots { display: none; }
+      .flow { flex-direction: column; gap: 8px; }
+      .connector { transform: rotate(90deg); }
+      .split, .deduction, .explain, .glossary { grid-template-columns: 1fr; }
+      .deduction { gap: 20px; }
+      .explain { gap: 20px; }
+      .tree-branches { gap: 12px; }
+      .tree-branches .node { padding: 12px; }
+      .town { gap: 8px; }
+      .person { padding: 12px 8px; font-size: 12px; }
+      .person b { font-size: 14px; }
+      .tweaks { padding: 12px; gap: 12px; }
+      .tweaks label { min-width: 120px; }
+      .route-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .comparison-row { grid-template-columns: 1fr; gap: 4px; }
+      .lesson-footer button { font-size: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *:before, *:after { transition: none !important; animation: none !important; }
+    }
+    @media print {
+      header, aside, .mobile-picker, .lab-controls, .tweaks, .lesson-footer, .options { display: none; }
+      .shell { display: block; }
+      main { padding: 0; }
+      .lab, .quiz, .limit { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to lesson</a>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2" y="3" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="21" y="20" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 7h10v13M7 12v12h14" stroke="currentColor" stroke-width="1.5"/><circle cx="21" cy="7" r="3" fill="currentColor"/></svg>
+        <div><strong>The agent paper lab</strong><small>Read the idea. Work the mechanism.</small></div>
+      </div>
+      <div class="top-actions"><button id="map-button">Paper map</button><button id="theme-button" aria-label="Switch color theme">Dark</button></div>
+    </div>
+  </header>
+  <div class="mobile-picker"><label for="chapter-select">Your learning path</label><select id="chapter-select"></select><div class="progress-label"><span>Knowledge checks passed</span><span id="mobile-progress">0 / 11</span></div></div>
+  <div class="shell">
+    <aside aria-label="Learning path">
+      <div class="sidebar-inner">
+        <div class="eyebrow">From text to agents</div>
+        <div class="progress-label"><span>Checks passed</span><span id="progress-label">0 / 11</span></div>
+        <progress id="progress" max="11" value="0" aria-label="Knowledge checks passed"></progress>
+        <div class="nav-label">Start here</div><nav id="intro-nav" aria-label="Foundations"></nav>
+        <div class="nav-label">The papers</div><nav id="paper-nav" aria-label="Paper lessons"></nav>
+        <div class="nav-label">Put it together</div><nav id="end-nav" aria-label="Synthesis"></nav>
+        <p class="sidebar-note">One lesson at a time. Change a variable, predict what happens, then test your understanding.</p>
+        <p class="sidebar-note">Works offline. Your checked lessons travel in the URL, not in a stored profile.</p>
+      </div>
+    </aside>
+    <main id="main"><noscript><div class="nojs"><h1>This visual lab needs JavaScript.</h1><p>Download this HTML file and open it in a browser with JavaScript enabled. It makes no model or network calls.</p><p>Original papers: <a href="https://arxiv.org/abs/2201.11903">Chain-of-Thought</a>, <a href="https://arxiv.org/abs/2210.03629">ReAct</a>, <a href="https://arxiv.org/abs/2302.04761">Toolformer</a>, <a href="https://arxiv.org/abs/2304.03442">Generative Agents</a>, <a href="https://arxiv.org/abs/2303.11366">Reflexion</a>, <a href="https://arxiv.org/abs/2305.10601">Tree of Thoughts</a>, <a href="https://arxiv.org/abs/2303.17580">HuggingGPT</a>, <a href="https://arxiv.org/abs/2305.16291">Voyager</a>, <a href="https://arxiv.org/abs/2308.08155">AutoGen</a>, <a href="https://arxiv.org/abs/2308.11432">Survey</a>.</p></div></noscript></main>
+  </div>
+  <script>
+    "use strict";
+    const lessons = [
+      {
+        id: "foundations", name: "What makes an agent?", title: "A model writes text.<br>An agent closes the loop.",
+        lead: "Imagine asking a model to reserve a room. It can write \"Room reserved.\" Nothing in the world has changed. An agent needs a program that turns a decision into an action, checks the result, and decides what to do next.",
+        type: "First principles", change: "Build the mental model", lab: "Find the boundary between words and actions",
+        principles: [
+          ["A model predicts the next token", "A token is a piece of text. The model repeatedly predicts another piece, using the text already in its context."],
+          ["Text can describe an action", "A sentence or structured tool call is still output. A runtime, the surrounding program, must interpret it and execute an allowed action."],
+          ["Feedback makes a loop", "Return the world's response to the model. It can choose a different next action. Memory preserves useful state beyond a single call."]
+        ],
+        contribution: "For this guide, an agent is a goal-directed system that uses a model to select actions, executes them through a runtime, and uses observations to continue or stop. Autonomy can be limited. A human can approve consequential actions.",
+        use: "Before choosing a framework, separate the model, the controller, the tools, the stored state, and the test for success.",
+        failure: "A plausible answer is not evidence that a task was completed. Even a real tool call can fail. Check the external state and enforce permissions in code.",
+        distinction: "The papers are a reading list from 2022 and 2023, not a complete account of today's agents. Their mechanisms remain useful to reason about. None is mandatory in every agent.",
+        code: "while not finished and budget_remaining:\n  decision = model(goal, observations, retrieved_memory)\n  if decision is a final_answer: stop\n  validate_tool_and_permissions(decision)\n  result = execute_allowed_action(decision)\n  observations.append(result)\nverify_goal_in_external_state()",
+        quiz: ["The model writes \"I sent the email.\" What proves the email was sent?", ["The confident wording", "A successful authorized send operation and a check of its result", "A longer explanation"], 1, "Only an external operation changes the mailbox. For consequential actions, the runtime also needs authorization. Text alone proves neither.", "Confidence is a property of the wording. Length adds no evidence of a completed operation."],
+        recall: "Explain the difference between a model and an agent without using the words \"smart\" or \"autonomous\".",
+        recallAnswer: "The model generates output. The surrounding agent system executes permitted actions, receives observations, keeps state as needed, and checks whether the goal is reached."
+      },
+      {
+        id: "cot", name: "Chain-of-Thought", title: "Give a multi-step problem<br>some working space.",
+        lead: "You can calculate the number of pencils left in your head. Writing the intermediate totals makes a dropped step easier to notice. Chain-of-Thought prompting gives the model examples of that intermediate work.",
+        year: "2022", arxiv: "2201.11903", paper: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", section: "Section 2; Section 3.1",
+        type: "Prompting method", change: "Context changes; weights stay fixed", lab: "Compare an answer with a worked path",
+        principles: [
+          ["The answer depends on earlier results", "To subtract the pencils given away, first compute how many the boxes contain."],
+          ["Generated steps become context", "The next generated token can condition on those intermediate results. The model has more explicit state to work with."],
+          ["Examples establish the format", "The original method supplies question, reasoning, and answer examples, then asks a new question in that pattern."]
+        ],
+        contribution: "The paper tests few-shot examples with intermediate reasoning on arithmetic, commonsense, and symbolic tasks. This is a change to the prompt at inference time, not a new training algorithm.",
+        use: "Use decomposed steps for tasks with checkable intermediate results. Ask for a concise solution or verification, rather than assuming access to a model's private internal reasoning.",
+        failure: "An incorrect early step can contaminate later steps. A fluent worked solution is not proof that the reasoning is correct, or a faithful record of internal computation.",
+        distinction: "\"Let's think step by step\" without worked examples is associated with later zero-shot CoT work. It is not the exact few-shot method introduced in this paper. A scratchpad alone does not make an agent.",
+        code: "prompt = worked_question_reasoning_answer_examples + new_question\nworked_solution = model(prompt)\ncheck_intermediate_arithmetic(worked_solution)\n# No model weight update",
+        quiz: ["What is the original paper changing?", ["The model's weights after every question", "The tool API", "The examples and reasoning format in the prompt"], 2, "The original few-shot CoT method adds intermediate reasoning to prompt examples. Model weights stay fixed.", "Neither fine-tuning nor tool execution is required by this prompting method."],
+        recall: "Why can a worked solution help even though every step is still generated text?",
+        recallAnswer: "Intermediate results enter the context for later generation. This gives the computation explicit state, but errors can still propagate and need independent checks."
+      },
+      {
+        id: "react", name: "ReAct", title: "Stop guessing.<br>Ask the world, then adapt.",
+        lead: "You want an available meeting room. Thinking harder cannot tell you whether someone booked it a minute ago. You need a live observation, then a decision that responds to it.",
+        year: "2022", arxiv: "2210.03629", paper: "ReAct: Synergizing Reasoning and Acting in Language Models", section: "Section 2; Section 3",
+        type: "Interaction pattern", change: "Context and environment change", lab: "Change the observation and watch the plan change",
+        principles: [
+          ["Some facts live outside the prompt", "Availability changes. The model's existing context may be stale or incomplete."],
+          ["An action retrieves or changes state", "A tool call can query a calendar, retrieve a page, or manipulate an environment. The runtime executes it."],
+          ["Observe before the next decision", "Interleave reasoning and actions with environment observations. A failed action should lead to a revised plan."]
+        ],
+        contribution: "ReAct interleaves reasoning traces with task-specific actions and observations. The main experiments use few-shot prompting with a frozen model; the paper also explores fine-tuning. Thoughts need not precede every action in every task.",
+        use: "Use it for tasks where the next step depends on information you do not yet have: research, troubleshooting, or interacting with a changing interface.",
+        failure: "A bad search query can return unhelpful evidence. Tool results can be wrong or hostile. A loop needs validation, action permissions, a call budget, and a stop rule.",
+        distinction: "CoT can work entirely inside one generated solution. ReAct repeatedly crosses the model/environment boundary. Reasoning text does not execute the action.",
+        code: "repeat within budget:\n  decision = model(goal, history)\n  if final_answer(decision): break\n  observation = runtime.execute(validate(decision.tool_call))\n  history += [decision, observation]\nverify_result()",
+        quiz: ["Room A turns out to be occupied. What makes this a ReAct-style loop?", ["Keep the original plan because it was well reasoned", "Use that observation to choose the next action", "Add a second agent without checking the room"], 1, "The observation changes what the system does next. Feedback is the connection between reasoning and acting.", "More reasoning or more agents do not help if the system ignores new evidence."],
+        recall: "What information does ReAct add that a self-contained chain of thought lacks?",
+        recallAnswer: "Observations from outside the model: tool responses or changes in the environment. Those observations can correct or redirect the next decision."
+      },
+      {
+        id: "toolformer", name: "Toolformer", title: "Teach the model<br>when a tool is worth calling.",
+        lead: "A calculator is useful for arithmetic. Calling one before every word would be absurd. Toolformer asks a measurable question: did this tool result help the model predict the text that follows?",
+        year: "2023", arxiv: "2302.04761", paper: "Toolformer: Language Models Can Teach Themselves to Use Tools", section: "Section 2: sampling, execution, filtering, fine-tuning",
+        type: "Training method", change: "Weights change during fine-tuning", lab: "Keep useful API calls; discard unhelpful ones",
+        principles: [
+          ["We need examples of useful calls", "A few human examples show the tool syntax. The model proposes candidate API calls inside ordinary text."],
+          ["Use prediction loss as a filter", "Loss measures how poorly the model predicts the continuation. Lower is better. Keep calls whose results reduce weighted next-token loss enough."],
+          ["Train on the retained examples", "Fine-tune on text with the useful calls inserted. The model learns where to call a tool and what arguments to supply."]
+        ],
+        contribution: "The method samples calls, executes them, filters them by loss reduction, and fine-tunes the model on the augmented corpus. At inference, a runtime still has to execute generated API calls and provide results.",
+        use: "Use this idea when training a model for tool use and you can generate, execute, and score candidate calls. It is not a prompt-only recipe.",
+        failure: "A result that helps predict a continuation is not automatically safe, cheap, or useful for a real user goal. Training-data quality and the supported tool set limit what the model learns.",
+        distinction: "The baseline is the smaller loss of no call and a call without its result. Retain when baseline loss minus result-conditioned loss meets the threshold. This is weight learning; ReAct primarily describes an interaction pattern.",
+        code: "for text in corpus:\n  candidates = sample_API_calls(text, few_tool_examples)\n  for call in candidates:\n    result = execute(call)\n    baseline = min(loss(no_call), loss(call_without_result))\n    if baseline - loss(call_with_result) >= threshold:\n      retain(text, call, result)\nfine_tune(model, retained_augmented_texts)",
+        quiz: ["Which candidate belongs in Toolformer's training data?", ["The longest API response", "A call whose result reduces continuation loss enough", "Every syntactically valid call"], 1, "The useful signal is loss reduction relative to the two baselines, not response length or syntax alone.", "Validity is necessary to execute a call, but it does not show that the result improves prediction."],
+        recall: "Where do weights change, and what remains the runtime's job?",
+        recallAnswer: "Weights change during fine-tuning on the filtered corpus. At inference, the runtime executes the model's API calls and returns the tool outputs."
+      },
+      {
+        id: "generative", name: "Generative Agents", title: "Remember experiences.<br>Turn them into a coherent life.",
+        lead: "Someone invites you to a party. Hours later, your decision to attend depends on remembering the invitation and how you feel about the host. A single prompt cannot hold an ever-growing life.",
+        year: "2023", arxiv: "2304.03442", paper: "Generative Agents: Interactive Simulacra of Human Behavior", section: "Section 4: memory, reflection, planning",
+        type: "Memory architecture", change: "External memories and plans change", lab: "Retrieve a memory, infer a preference, make a plan",
+        principles: [
+          ["Experience exceeds the context window", "A memory stream stores observations outside the model. Retrieve selected records instead of stuffing the entire history into every prompt."],
+          ["Useful is different from recent", "Retrieval combines relevance, recency, and importance. A fresh breakfast memory may matter less than an earlier invitation."],
+          ["Reflection compresses experience", "The model synthesizes higher-level inferences from memories. Plans translate those inferences into behavior; both feed back into memory."]
+        ],
+        contribution: "The paper builds a town of 25 agents with memory streams, retrieval, reflection, and planning. It studies believable individual behavior and social interactions, including information spreading and coordination.",
+        use: "Use the architecture for simulations or experiences that need continuity across interactions. Outside simulation, distinguish confirmed facts from inferred preferences.",
+        failure: "Agents can retrieve the wrong memory or invent embellishments. Believable simulated behavior is not evidence that a population predicts real people.",
+        distinction: "Reflection here forms higher-level inferences from experience. Reflexion uses feedback about a task attempt to improve the next attempt. Those are related ideas with different purposes.",
+        code: "memory_stream.add(observation)\nmemories = retrieve(relevance + recency + importance)\nif enough_salient_experience:\n  memory_stream.add(reflect(memories))\nplan = model(profile, memories, current_environment)\nact_and_replan_when_needed(plan)",
+        quiz: ["Why not retrieve only the most recent memory?", ["Older memories are always more accurate", "A recent irrelevant event can crowd out an important invitation", "The paper removes recency entirely"], 1, "The architecture balances recency with relevance and importance. The freshest memory is not necessarily the best context for a decision.", "Age alone says little about usefulness or truth. The paper includes recency; it does not use recency alone."],
+        recall: "How is a reflection different from the raw memory it was derived from?",
+        recallAnswer: "A raw memory records an experience. A reflection is a higher-level inference across experiences, such as a preference or relationship. It can be useful and still be mistaken."
+      },
+      {
+        id: "reflexion", name: "Reflexion", title: "Keep the lesson<br>from a failed attempt.",
+        lead: "Your code passes the easy example and fails on negative numbers. Retrying from a blank prompt can repeat the same mistake. Write down the specific failure and carry it into the next trial.",
+        year: "2023", arxiv: "2303.11366", paper: "Reflexion: Language Agents with Verbal Reinforcement Learning", section: "Section 3: Actor, Evaluator, Self-Reflection",
+        type: "Feedback and memory method", change: "Text memory changes; weights stay fixed", lab: "Run a test, store feedback, retry",
+        principles: [
+          ["An attempt needs an evaluator", "A test, environment reward, heuristic, or model judgment can identify failure. The quality of that signal matters."],
+          ["A score needs an explanation", "A reflection translates feedback into a concrete lesson about what went wrong and what to try differently."],
+          ["The next trial gets that lesson", "An episodic memory buffer supplies reflective text to the actor. Behavior can change without updating model weights."]
+        ],
+        contribution: "Reflexion combines an actor, an evaluator, and a self-reflection component. The actor can itself use CoT or ReAct. The method adapts across trials through stored linguistic feedback.",
+        use: "Use it when tasks allow retries and you can obtain reliable feedback. Coding tests and structured environment outcomes are better evidence than unsupported self-praise.",
+        failure: "A mistaken reflection can reinforce a bad strategy. Passing the visible tests does not guarantee correctness on unseen cases. The paper gives no general success guarantee.",
+        distinction: "This is learning in the sense of adapting behavior through context. It is not gradient-based reinforcement learning or a model weight update.",
+        code: "memory = []\nfor trial in allowed_trials:\n  attempt = actor(task, memory)\n  feedback = evaluator(attempt)\n  if feedback.success: return attempt\n  lesson = reflect(attempt, feedback)\n  memory.append(lesson)",
+        quiz: ["What is retained between Reflexion trials?", ["A gradient update to the language model", "The same answer with a higher confidence score", "Reflective text about the previous attempt"], 2, "Reflexion stores verbal feedback in episodic memory and includes it in future context. It does not require weight updates.", "The method changes the information supplied to the actor, not its model parameters."],
+        recall: "Why is an evaluator needed if the model can critique itself?",
+        recallAnswer: "The reflection needs a trustworthy failure signal. A model can miss its own errors. Tests or environment feedback can provide evidence its self-critique lacks."
+      },
+      {
+        id: "tot", name: "Tree of Thoughts", title: "Explore a branch.<br>Keep the option to go back.",
+        lead: "At a fork in a maze, a confident first choice can still be wrong. Tree of Thoughts turns intermediate solutions into states that can be proposed, evaluated, and searched.",
+        year: "2023", arxiv: "2305.10601", paper: "Tree of Thoughts: Deliberate Problem Solving with Large Language Models", section: "Section 3; Section 4.1, Game of 24",
+        type: "Inference-time search", change: "Search states change; weights stay fixed", lab: "Make 24 with 4, 7, 8, 8, using each once",
+        principles: [
+          ["A partial solution is a state", "After combining two numbers, the remaining numbers define a new state. A thought can be an equation, a writing plan, or another useful chunk."],
+          ["Generate more than one next step", "Explore alternative continuations instead of committing to a single generated path."],
+          ["Evaluate and search", "Use a heuristic to keep promising states and prune others. Breadth-first or depth-first search manages exploration and backtracking."]
+        ],
+        contribution: "The framework specifies thought decomposition, candidate generation, state evaluation, and search. It tests tasks including Game of 24, creative writing, and mini crosswords.",
+        use: "Use it for bounded problems with several plausible intermediate choices and a useful way to evaluate partial progress. Set an exploration budget.",
+        failure: "The model's heuristic can prune a good path or prefer a bad one. Branching increases calls and cost. A larger tree is not automatically a better solution.",
+        distinction: "CoT follows a generated chain. ToT manages multiple intermediate states. Self-consistency, which votes over completed answers, is a different mechanism. This demo uses authored branches and exact arithmetic, not an LLM heuristic.",
+        code: "frontier = [initial_state]\nwhile within_search_budget:\n  candidates = generate_next_thoughts(frontier)\n  values = evaluate_partial_states(candidates)\n  frontier = keep_promising(candidates, values)\n  if verified_solution(frontier): return solution\n  # DFS can return to an earlier state",
+        quiz: ["What turns several suggestions into Tree of Thoughts?", ["A controller that evaluates partial states and manages a search", "Printing all suggestions in one answer", "Asking one model to be confident"], 0, "A search procedure manages candidate states, evaluation, and continued exploration. Listing alternatives alone is insufficient.", "The defining addition is control over the search, including state evaluation and pruning or backtracking."],
+        recall: "What must you decide before applying ToT to a new task?",
+        recallAnswer: "What counts as a thought/state, how to generate alternatives, how to score partial progress, and how to search within a budget."
+      },
+      {
+        id: "hugging", name: "HuggingGPT", title: "Let a language model<br>dispatch the specialist work.",
+        lead: "A conductor does not play every instrument. HuggingGPT uses a language model to break down a request and select specialist models from their descriptions.",
+        year: "2023", arxiv: "2303.17580", paper: "HuggingGPT: Solving AI Tasks with ChatGPT and its Friends in Hugging Face", section: "Section 3: planning, selection, execution, response",
+        type: "Model orchestration", change: "Task plan and artifacts change", lab: "Describe a photo aloud and list its objects",
+        principles: [
+          ["Tasks need different capabilities", "Detecting objects in an image and producing speech are different input/output problems."],
+          ["Descriptions connect tasks to models", "Natural-language descriptions let the controller choose a model suited to each subtask."],
+          ["Dependencies determine execution order", "Speech generation needs text first. Independent image tasks can run in parallel; dependent tasks must wait for their inputs."]
+        ],
+        contribution: "HuggingGPT connects ChatGPT as a controller to models on Hugging Face. Its four stages are task planning, model selection, task execution, and response generation.",
+        use: "Use the idea for workflows that combine specialist capabilities. Validate task schemas, artifact types, dependencies, and failures before passing outputs downstream.",
+        failure: "An incorrect task plan or model choice can break the pipeline. Long chains add latency and propagate errors. The controller's description-based choice does not guarantee compatibility.",
+        distinction: "The paper's limitations reflect the text-centered models of its period. Modern multimodal models may cover several capabilities directly. Use specialists when they improve the task, not because the old diagram demands them.",
+        code: "tasks = controller.plan(user_request)\nfor task in dependency_order(tasks):\n  expert = controller.select(task, model_descriptions)\n  validate_inputs_and_model(expert, task)\n  artifacts[task.id] = run_expert(expert, task.inputs)\nresponse = controller.integrate(artifacts)",
+        quiz: ["Why must text-to-speech wait for the caption?", ["It has a different agent name", "It consumes the caption as an input artifact", "All specialist models must run sequentially"], 1, "This is a data dependency. Object detection and captioning can run independently, while speech consumes the caption.", "The order comes from required inputs. Independent tasks can execute in parallel."],
+        recall: "How does HuggingGPT differ from simply asking one model to describe an image?",
+        recallAnswer: "It plans multiple tasks, selects expert models using descriptions, executes them with dependencies, then integrates their outputs."
+      },
+      {
+        id: "voyager", name: "Voyager", title: "Store a working skill.<br>Use it to learn a harder one.",
+        lead: "If you had to relearn how to chop wood every time you wanted a tool, progress would stall. Voyager preserves successful programs and composes them into new behaviors.",
+        year: "2023", arxiv: "2305.16291", paper: "Voyager: An Open-Ended Embodied Agent with Large Language Models", section: "Section 2: automatic curriculum, skill library, iterative prompting",
+        type: "Open-ended agent architecture", change: "Executable skill library grows", lab: "Watch a program become a reusable skill",
+        principles: [
+          ["Choose the next learnable goal", "An automatic curriculum proposes objectives using the agent's current state and exploration progress."],
+          ["Use code as an action", "Programs express extended behaviors. Execution feedback, errors, and self-verification drive iterative program repair."],
+          ["Retain verified programs", "Store successful code with a description embedding. Retrieve relevant skills and compose them to attempt harder goals."]
+        ],
+        contribution: "Voyager combines an automatic curriculum, an executable skill library, and iterative prompting in Minecraft. It uses black-box model calls without fine-tuning the model parameters.",
+        use: "Use the pattern when successful procedures can be saved as reusable skills and the environment provides feedback. Revalidate skills when APIs or environments change.",
+        failure: "The evidence comes from a particular Minecraft setup. Reusable code can become stale or unsafe elsewhere. A verification mistake can admit a broken program to the library.",
+        distinction: "Reflexion retains verbal lessons. Voyager retains executable skills as well as using feedback. \"Lifelong learning\" here refers to accumulating capabilities outside the model's weights.",
+        code: "goal = curriculum(state, exploration_history)\nskills = retrieve_by_description_embedding(goal)\nprogram = model(goal, state, skills)\nwhile retry_budget:\n  feedback = execute(program)\n  if verify_goal(feedback):\n    skill_library.add(program, description)\n    break\n  program = repair(program, feedback)\n# Curriculum proposes a new goal; reuse stored skills",
+        quiz: ["What should enter Voyager's skill library?", ["Every generated program", "Only programs with confident comments", "A program verified to complete its task"], 2, "The library preserves successful executable behavior for retrieval and composition. Generated code alone has not earned that status.", "Untested or failed code should not be promoted to a successful reusable skill."],
+        recall: "Name the two things that make Voyager more than a code-repair loop.",
+        recallAnswer: "An automatic curriculum chooses new objectives, and a growing library retains/retrieves executable skills so harder tasks can reuse earlier successes."
+      },
+      {
+        id: "autogen", name: "AutoGen", title: "Make collaboration<br>a conversation you can control.",
+        lead: "One role writes code. Another executes it and returns the error. A human can approve the execution. AutoGen packages these interactions as conversations between configurable agents.",
+        year: "2023", arxiv: "2308.08155", paper: "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation", section: "Section 2: conversable agents and conversation patterns",
+        type: "Multi-agent framework", change: "Messages and execution state change", lab: "Writer, executor, and a human approval boundary",
+        principles: [
+          ["Different roles hold different capabilities", "An agent can be backed by an LLM, tools, human input, or a combination. Every role need not use a different model."],
+          ["Messages carry the handoffs", "A unified receive-and-reply interface can connect generated code, execution feedback, and human decisions."],
+          ["The developer owns the control flow", "Choose who talks to whom, when humans intervene, and when the conversation terminates. Do not let \"keep chatting\" be the success criterion."]
+        ],
+        contribution: "The framework introduces customizable, conversable agents and flexible multi-agent conversation patterns. It demonstrates workflows such as code generation with execution feedback and human involvement.",
+        use: "Use multiple roles when the separation has a purpose: different permissions, specialized context, independent evaluation, or a human decision. Start with the fewest useful roles.",
+        failure: "Agents can repeat or amplify the same mistake. Conversations can consume the budget without solving the task. Tool execution needs isolation and permissions; role labels do not provide either.",
+        distinction: "Agreement between agents is not an external correctness check. This lesson explains the 2023 paper, not the current library API or a claim that its design is the best framework today.",
+        code: "writer.send(code, executor)\nif human_approval_required: await_approval()\nexecutor.send(test_results, writer)\nwriter.send(revised_code, executor)\nstop_on_verified_success_or_budget()\n# Agent capabilities and conversation topology are configured",
+        quiz: ["Two agents agree that code works. What is still missing?", ["A third agent to agree with them", "Evidence from execution and suitable tests", "More elaborate role descriptions"], 1, "Agreement is a conversational outcome. Correctness requires evidence appropriate to the task, such as execution and independent tests.", "More agreeing agents can share the same error. Role descriptions do not prove code correctness."],
+        recall: "What can an AutoGen agent contain besides an LLM?",
+        recallAnswer: "Tool capabilities, human input, or combinations of these. The conversation interface connects different capabilities, not necessarily different models."
+      },
+      {
+        id: "survey", name: "Autonomous agents survey", title: "Use a map<br>before adding more machinery.",
+        lead: "You can keep adding tools, memory, and agents until the system becomes impossible to reason about. The survey gives you a vocabulary for construction, applications, and evaluation.",
+        year: "2023", arxiv: "2308.11432", paper: "A Survey on Large Language Model based Autonomous Agents", section: "Sections 2, 3, 4, and 6",
+        type: "Survey and taxonomy", change: "A way to classify systems", lab: "Inspect the modules, then inspect the outcome",
+        principles: [
+          ["Architecture names what is inside", "The survey's profiling, memory, planning, and action modules help locate the responsibility for a behavior."],
+          ["Applications specify the job", "An architecture useful in a social simulation may not be appropriate for an engineering workflow. The environment and stakes differ."],
+          ["Evaluation defines what counts", "Subjective judgments can assess qualities such as believability. Objective tests assess measurable outcomes. Both must fit the application."]
+        ],
+        contribution: "The survey organizes the field into construction, application, and evaluation. Its architecture framework includes profiling, memory, planning, and action, alongside discussion of learning strategies and challenges.",
+        use: "Use it to review a proposed system: what belongs in each module, why is it needed, and how will you know it works?",
+        failure: "A taxonomy is a map of the reviewed work, not a proof of performance or a mandatory architecture. It is a 2023 snapshot, not an exhaustive inventory of the field today.",
+        distinction: "This is a survey, not a new tool-calling or search algorithm. Safety, cost, and latency questions in the demo are engineering extensions to the paper's evaluation framing.",
+        code: "system = {\n  profile: role_and_attributes,\n  memory: retained_and_retrieved_state,\n  planning: strategy_and_next_steps,\n  action: permitted_external_operations\n}\nevaluate(system, task_outcomes, human_judgments)\n# Also inspect safety, latency, cost, and robustness",
+        quiz: ["An agent appears believable but fails its assigned task. What does the survey help you notice?", ["Believability implies objective success", "Every application should use the same metric", "Different qualities need different evaluation methods"], 2, "Subjective believability and objective task success are different dimensions. Choose evaluation methods that fit the application.", "A convincing simulation can fail an objective test. One metric cannot stand in for every quality."],
+        recall: "Use the four architecture modules to describe an agent you already use.",
+        recallAnswer: "Identify its role/profile, what state it retains and retrieves, how it plans, and which actions the runtime permits. Then name a task-level test that would expose failure."
+      }
+    ];
+    const synthesis = { id: "synthesis", name: "Connect & practice" };
+    const routes = [...lessons, synthesis];
+    const state = { lesson: "foundations", step: 0, passed: new Set(), answers: {}, boxes: 3, pencils: 4, given: 2, room: "busy", tool: "calculator", threshold: .5, retrieval: "balanced", keepMemory: true, branch: "sum", expert: "caption", executionFails: true, skillReuse: true, approval: true, budget: 4, module: "memory", filter: "all", practice: {}, recallIndex: 0, recallRevealed: false };
+    const main = document.getElementById("main");
+    const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    const arrow = '<span class="connector" aria-hidden="true">&#8594;</span>';
+    const personIcon = '<svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><circle cx="18" cy="10" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M7 31v-5a11 11 0 0 1 22 0v5M12 31v-8M24 31v-8" stroke="currentColor" stroke-width="1.5"/></svg>';
+    function node(kicker, title, text, active = false, dim = false) {
+      return `<div class="node ${active ? "active" : ""} ${dim ? "dim" : ""}"><span class="kicker">${kicker}</span><strong>${title}</strong><p>${text}</p></div>`;
+    }
+    function flow(items) { return `<div class="flow">${items.join(arrow)}</div>`; }
+    function callout(text) { return `<div class="callout">${text}</div>`; }
+    function range(key, label, min, max, step = 1) {
+      return `<label for="${key}">${label} <output id="${key}-value">${state[key]}</output><input type="range" id="${key}" data-state="${key}" min="${min}" max="${max}" step="${step}" value="${state[key]}"></label>`;
+    }
+    function select(key, label, options) {
+      return `<label for="${key}">${label}<select id="${key}" data-state="${key}">${options.map(([value, name]) => `<option value="${value}" ${state[key] === value ? "selected" : ""}>${name}</option>`).join("")}</select></label>`;
+    }
+    function checkbox(key, label) {
+      return `<label class="checkbox" for="${key}"><input type="checkbox" id="${key}" data-state="${key}" ${state[key] ? "checked" : ""}>${label}</label>`;
+    }
+    function tweak(content) { return `<div class="tweaks">${content}</div>`; }
+    function code(text) { return `<pre>${escapeHTML(text)}</pre>`; }
+    function canReach24(values) {
+      if (values.length === 1) return Math.abs(values[0] - 24) < 1e-8;
+      for (let i = 0; i < values.length; i++) {
+        for (let j = i + 1; j < values.length; j++) {
+          const a = values[i], b = values[j];
+          const remaining = values.filter((_, index) => index !== i && index !== j);
+          const results = [a + b, a - b, b - a, a * b];
+          if (Math.abs(b) > 1e-8) results.push(a / b);
+          if (Math.abs(a) > 1e-8) results.push(b / a);
+          if (results.some(result => canReach24([...remaining, result]))) return true;
+        }
+      }
+      return false;
+    }
+    const treeReachability = { sum: canReach24([4, 7, 16]), divide: canReach24([4, 7, 1]) };
+    function getDemo(id) {
+      const s = state.step;
+      if (id === "foundations") {
+        return {
+          steps: [
+            ["The model sees text", "Its context includes a goal, instructions, and any observations supplied by the surrounding program."],
+            ["The model generates output", "\"Reserve Room A\" is a proposal. The calendar has not changed."],
+            ["The runtime executes an allowed action", "The program validates the call and permissions, then invokes the calendar tool. This is where the model's output meets the world."],
+            ["The result returns as context", "The calendar says the room is busy. The next model call can choose a different room. The loop also needs a budget and a definition of success."]
+          ],
+          html: flow([
+            node("Input", "Goal + context", "Reserve a room for 10:00.", s === 0),
+            node("Language model", "Predict output", s >= 1 ? '<span class="mono">reserve("A", "10:00")</span>' : "Generates tokens, not calendar changes.", s === 1),
+            node("Runtime + tools", "Validate and execute", s >= 2 ? "Calendar API checks the attempted reservation." : "A separate program owns execution.", s === 2, s < 2)
+          ]) + callout(s < 2 ? "<b>Nothing is reserved yet.</b> Words and tool-call syntax are still just output until a runtime acts." : s === 2 ? "<b>The action can fail.</b> Calling a real tool does not guarantee the requested outcome." : '<b>Observation: Room A is busy.</b> Return this result to the model. Choose another action or stop; do not claim success.') +
+          '<p class="small" style="margin:16px 0 0">Model weights are learned during training. Context is supplied at inference. Tool access and durable memory come from the surrounding system.</p>'
+        };
+      }
+      if (id === "cot") {
+        const total = state.boxes * state.pencils, left = total - state.given;
+        return {
+          steps: [
+            ["Show the model a worked example", "The original method teaches the format through examples containing a question, intermediate reasoning, and a final answer."],
+            ["Compute an intermediate quantity", "The generated total enters the context. The next step can refer to it."],
+            ["Apply the next operation", "Subtract the number given away. Each dependency is explicit and can be checked."],
+            ["Check the answer", "This simulation computes the arithmetic exactly. A real model can still produce an incorrect or unfaithful explanation."]
+          ],
+          html: tweak(range("boxes", "Boxes", 1, 6) + range("pencils", "Pencils per box", 2, 10) + range("given", "Given away", 0, 2)) +
+            '<div class="small">Prompt exemplar: 2 boxes x 3 pencils = 6; give away 1; 6 - 1 = 5 left.</div>' +
+            `<p style="margin:12px 0 20px"><b>New question:</b> You have ${state.boxes} boxes of ${state.pencils} pencils and give away ${state.given}. How many remain?</p>` +
+            '<div class="split">' +
+            node("Direct-answer illustration", "Answer only", `${left} pencils. The intermediate quantities are not shown.`, false) +
+            `<div class="stack">${node("Worked path", "1. Count the pencils", s >= 1 ? `${state.boxes} x ${state.pencils} = ${total}` : "Advance to reveal.", s === 1, s < 1)}${node("Working becomes context", "2. Subtract those given away", s >= 2 ? `${total} - ${state.given} = ${left}` : "Needs the total from step 1.", s === 2, s < 2)}</div></div>` +
+            (s === 3 ? `<div class="equation">${state.boxes} x ${state.pencils} - ${state.given} = ${left}</div>` : "") +
+            callout("Both panels are deterministic teaching examples. The demo does not claim that direct prompting gets this problem wrong.")
+        };
+      }
+      if (id === "react") {
+        const busy = state.room === "busy";
+        return {
+          steps: [
+            ["Decide what you need to know", "To find a room, first check availability. This short decision note is authored for teaching."],
+            ["Call the tool", "The runtime sends a read-only availability query. A generated plan does not itself query a calendar."],
+            ["Receive an observation", "Change the mocked tool response above. New evidence enters the agent's context."],
+            ["Adapt the next action", busy ? "Room A is busy, so query Room B. In this fictional fixture, Room B is available." : "Room A is available. No search for Room B is needed."],
+            ["Report only what was established", "The agent found an available room. It did not reserve one. Finding and booking are different operations."]
+          ],
+          html: tweak(select("room", "Mock calendar response", [["busy", "Room A is busy"], ["free", "Room A is free"]])) +
+            flow([
+              node("Decision", "Need current availability", "Find a room for 10:00.", s === 0),
+              node("Action", "calendar.lookup(A)", s >= 1 ? "Runtime executes a read-only query." : "Waiting to query.", s === 1, s < 1),
+              node("Observation", s >= 2 ? (busy ? "A is busy" : "A is free") : "Not observed yet", "This comes from the environment.", s === 2, s < 2)
+            ]) + (s >= 3 ? callout(busy ? '<b>Revised action:</b> calendar.lookup(B) &rarr; B is free.<br><b>Final statement:</b> Room B is available. No room has been booked.' : '<b>Next decision:</b> stop searching.<br><b>Final statement:</b> Room A is available. No room has been booked.') : callout("Decision &rarr; action &rarr; observation &rarr; updated decision. The observation can redirect the loop."))
+        };
+      }
+      if (id === "toolformer") {
+        const useful = state.tool === "calculator", baseline = 2.4, withResult = useful ? 1.1 : 2.6;
+        const improvement = baseline - withResult, keep = improvement + 1e-9 >= state.threshold;
+        return {
+          steps: [
+            ["Propose a candidate call", "A few API examples guide the model to propose candidate call positions and arguments in a text corpus."],
+            ["Execute the candidate", "Run the API and capture its textual result. The result becomes candidate context for predicting the continuation."],
+            ["Measure whether the result helps", "The toy baseline is min(2.4 without a call, 2.7 with a call but no result). Compare that 2.4 against loss with the result."],
+            ["Filter, then fine-tune", keep ? "This candidate clears the toy threshold. Insert it into the training text; fine-tuning updates the model's weights." : "Discard this candidate. It does not clear the toy threshold and therefore contributes no retained training example."],
+            ["At inference, the learned policy can emit calls", "The trained model can generate API syntax. A runtime executes the call and resumes generation with the result. Training and runtime are separate stages."]
+          ],
+          html: tweak(select("tool", "Candidate tool", [["calculator", "Calculator: 17 x 23"], ["translation", "Translate: hello"]]) + range("threshold", "Minimum loss reduction", 0, 2, .1)) +
+            node("Corpus continuation to predict", "17 tickets at 23 each cost ...", "The target continuation is 391. Useful context makes that continuation less surprising.", s === 0) +
+            '<div class="split" style="margin-top:16px">' +
+            node("Candidate call + response", useful ? "calculator(17 * 23)" : 'translate("hello", "French")', s >= 1 ? (useful ? "Result: 391" : "Result: bonjour") : "Advance to execute.", s === 1) +
+            node("Toy loss, lower is better", s >= 2 ? `2.4 - ${withResult.toFixed(1)} = ${improvement.toFixed(1)}` : "Score the continuation", s >= 2 ? `Reduction ${improvement.toFixed(1)}; threshold ${state.threshold.toFixed(1)}. ${keep ? "KEEP" : "DISCARD"}.` : "No scoring yet.", s === 2) +
+            '</div>' + callout(s >= 3 ? (keep ? "<b>Retain &rarr; augmented corpus &rarr; fine-tune weights.</b> This candidate becomes a training example." : "<b>Discard.</b> Other retained calls can still train the model; this one cannot.") : "<b>Illustrative loss values, not measured results.</b> These numbers explain the filtering rule. No model is trained here.") +
+            (s === 4 ? flow([node("Trained model", "Generate tool call", "Knows the learned call format."), node("Runtime", "Execute API", "Returns the tool result."), node("Trained model", "Continue text", "Conditions on the result.")]) : "")
+        };
+      }
+      if (id === "generative") {
+        const memories = [
+          { text: "Mira invited me to pottery at 18:00.", r: .9, c: .4, i: .8 },
+          { text: "I just ate toast.", r: .05, c: 1, i: .1 },
+          { text: "I enjoy making things with friends.", r: .8, c: .1, i: .6 }
+        ];
+        const weighted = memories.map(m => ({ ...m, score: m.r + m.c * (state.retrieval === "recent" ? 3 : 1) + m.i }));
+        const ranked = [...weighted].sort((a,b) => b.score - a.score), chosen = ranked[0];
+        const wrong = state.retrieval === "recent";
+        return {
+          steps: [
+            ["Observe and store an experience", "An invitation enters one agent's memory stream. Other agents have separate experiences."],
+            ["Retrieve memories for the current decision", "Question: what should I do this evening? Change the retrieval emphasis to see a recent but irrelevant memory outrank the invitation."],
+            ["Reflect across useful memories", "With the invitation and hobby memory, an inference could be \"I value shared creative activities.\" This inference is generated, not a guaranteed fact."],
+            ["Plan and interact", "A plan can include attending pottery and inviting a friend. Repeated local interactions can spread information without scripting one global social outcome."]
+          ],
+          html: tweak(select("retrieval", "Toy retrieval emphasis", [["balanced", "Balance all three signals"], ["recent", "Overweight recency"]])) +
+            '<div class="town"><div class="person">' + personIcon + '<b>Mira</b>Hosts pottery</div><div class="person">' + personIcon + '<b>Alex</b>Receives invitation</div><div class="person">' + personIcon + '<b>Sam</b>' + (s >= 3 && !wrong ? "Hears from Alex" : "Has not heard yet") + '</div></div>' +
+            '<div class="stack" style="margin-top:16px">' + weighted.map(m => `<div class="node memory-row ${s >= 1 && chosen === m ? "active" : ""}"><div><b>${m.text}</b><div class="small">Relevance ${m.r.toFixed(2)} / recency ${m.c.toFixed(1)} / importance ${m.i.toFixed(1)}</div></div><span>${m.score.toFixed(2)}</span></div>`).join("") + '</div>' +
+            callout(s === 0 ? "The original town has 25 agents. These three fictional people illustrate memory and local information flow, not a reproduction." : wrong ? `<b>Top retrieved: ${chosen.text}</b><br>The toast memory crowds out the invitation in this top-one toy retrieval. The demo cannot ground an evening plan on it. Restore balanced scoring.` : s === 1 ? `<b>Top retrieved: ${chosen.text}</b><br>In practice, retrieve several relevant records, not just this demo's top-one illustration.` : s === 2 ? "<b>Reflection:</b> I value shared creative activities. Add this inference to memory with its supporting experiences." : "<b>Plan:</b> attend pottery at 18:00; tell Sam. Local interactions can carry information onward.") +
+            '<p class="small" style="margin:12px 0 0">All memory scores and weights are illustrative. The paper normalizes and combines retrieval signals; these sliders are not its fitted configuration.</p>'
+        };
+      }
+      if (id === "reflexion") {
+        const corrected = s >= 4 && state.keepMemory;
+        const result = corrected ? Math.max(-5, -2) : Math.max(0, -5, -2);
+        return {
+          steps: [
+            ["The actor writes an attempt", "For non-empty arrays, initialize the running maximum. The first attempt incorrectly starts at zero."],
+            ["An evaluator exposes the failure", "For [-5, -2], the expected maximum is -2. Starting at zero returns a value that is not even in the input."],
+            ["Reflect on the failure", "Translate \"test failed\" into a specific explanation and a next-attempt instruction."],
+            ["Retain or drop the lesson", "Turn memory off to remove the reflective note from the next-trial prompt. The model's weights are unchanged in both cases."],
+            ["The next trial receives the memory", state.keepMemory ? "The scripted retry uses the note and initializes from the first element. The negative-number test now passes." : "Without the note, this scripted retry repeats the original mistake. A real model might improve anyway; this is a controlled illustration, not a measured success rate."]
+          ],
+          html: tweak(checkbox("keepMemory", "Carry the reflective note into the next trial")) +
+            '<div class="split"><div>' + node("Actor: generated code", corrected ? "Trial 2: revised initialization" : s >= 4 ? "Trial 2: repeated initialization" : "Trial 1: faulty initialization", "Function contract: input is a non-empty array.", s === 0 || s === 4) +
+            code(`function maximum(values) {\n  let best = ${corrected ? "values[0]" : "0"};\n  for (const value of values) {\n    if (value > best) best = value;\n  }\n  return best;\n}`) + '</div><div class="stack">' +
+            node("Evaluator", s >= 1 ? `Test ${corrected ? "PASS" : "FAIL"}` : "Test not run yet", s >= 1 ? `maximum([-5, -2]) returned ${result}; expected -2.` : "An outcome needs to be checked.", s === 1) +
+            node("Episodic text memory", s >= 2 ? "Initialize from the first value" : "No lesson yet", s >= 2 ? (state.keepMemory ? "Zero assumes a non-negative answer. Start with values[0] for a non-empty input." : "Reflective note is excluded from the next trial.") : "The evaluator's feedback will inform a reflection.", s === 2 || s === 3, !state.keepMemory) +
+            '</div></div>' + callout("<b>What changed?</b> The next-trial context. Model weights stay fixed. The retry is authored; the test arithmetic is computed in this page.")
+        };
+      }
+      if (id === "tot") {
+        const bad = state.branch === "sum", evaluated = s >= 2, backtracked = s >= 3;
+        if (treeReachability.sum || !treeReachability.divide) throw new Error("The authored tree does not match the exact arithmetic search.");
+        return {
+          steps: [
+            ["Define the starting state", "Use 4, 7, 8, and 8 exactly once with arithmetic operations to reach 24."],
+            ["Generate alternative next thoughts", "Choose a branch below. A search controller retains the other possibility rather than forgetting it."],
+            ["Evaluate the chosen partial state", bad ? "8 + 8 leaves [4, 7, 16]. With these remaining values and +, -, *, /, no expression reaches 24. The demo checks this exactly." : "8 / 8 leaves [4, 7, 1]. There is a route to 24. The paper uses model-based heuristics, which can be wrong."],
+            ["Backtrack or keep the promising branch", bad ? "Prune the dead end and return to the other branch. Search can undo an early commitment." : "Keep the division branch and expand 7 - 1 = 6."],
+            ["Verify the complete solution", "(7 - 8 / 8) * 4 = 24. Every original number is used exactly once. A completed candidate still needs a final check."]
+          ],
+          html: '<div class="tree-root">' + node("Root state", "4, 7, 8, 8", "Target: 24", s === 0) + '</div><div class="tree-branches">' +
+            `<div class="branch"><button data-branch="sum" aria-pressed="${bad}">Branch A: 8 + 8</button>${node("Remaining state", "4, 7, 16", evaluated && bad ? "PRUNE: exact search finds no solution." : "Evaluate this partial state.", evaluated && bad)}${s >= 3 ? '<div class="small" style="margin-top:12px">Return to the fork &rarr;</div>' : ""}</div>` +
+            `<div class="branch"><button data-branch="divide" aria-pressed="${!bad}">Branch B: 8 / 8</button>${node("Remaining state", "4, 7, 1", evaluated && !bad || backtracked ? "KEEP: a solution exists." : "A different continuation.", backtracked || evaluated && !bad)}${backtracked ? node("Next thought", "7 - 1 = 6", "Remaining state: 4, 6", s === 3) : ""}</div></div>` +
+            (s === 4 ? '<div class="equation">(7 - 8 / 8) * 4 = 24</div>' : "") +
+            callout("The search is outside the model. This authored two-branch demonstration uses an exact solver as a teaching aid; an LLM state evaluator is a fallible heuristic.")
+        };
+      }
+      if (id === "hugging") {
+        const valid = state.expert === "caption";
+        return {
+          steps: [
+            ["Plan the subtasks and dependencies", "Object detection and captioning consume the same image. Text-to-speech consumes the caption, so it must wait."],
+            ["Select models by their descriptions", "Choose the caption expert above. A text sentiment classifier cannot consume an image and produce a caption."],
+            ["Execute when dependencies are satisfied", valid ? "Run detection and captioning, then synthesize speech from the caption. This page shows mocked artifacts." : "Input/output validation rejects the chosen expert. Caption and dependent speech are blocked; do not invent a successful result."],
+            ["Integrate the outputs", valid ? "Return the object list and spoken description. This is an authored fixture, not a real image or speech-model run." : "Report the model-selection failure and choose a compatible expert before retrying."]
+          ],
+          html: tweak(select("expert", "Model for the caption task", [["caption", "Image captioner: image -> text"], ["sentiment", "Sentiment classifier: text -> label"]])) +
+            node("User request", "Describe this photo aloud; list objects", "Fictional input image: a dog beside a bicycle.", s === 0) +
+            '<div class="split" style="margin-top:16px"><div class="stack">' +
+            node("Independent task A", "Object detection", s >= 2 ? "Mock artifact: [dog, bicycle]" : "Consumes image; returns object labels.", s === 2) +
+            node("Independent task B", valid ? "Image captioning" : "Incompatible classifier", s >= 2 ? (valid ? 'Mock artifact: "A dog sits beside a bicycle."' : "BLOCKED: image is not a text input; label is not a caption.") : "Consumes image; returns text.", s === 1) +
+            '</div><div class="stack">' +
+            node("Depends on caption text", "Text-to-speech", s >= 2 ? (valid ? "Mock artifact: spoken-caption audio" : "BLOCKED: no caption artifact.") : "Wait for caption, then synthesize speech.", s === 2, !valid) +
+            node("Controller", "Response generation", s === 3 ? (valid ? "Object list + spoken caption. All required artifacts are present." : "Failure reported. Correct the expert selection before retrying.") : "Wait for required artifacts.", s === 3) +
+            '</div></div>' + callout("Language descriptions help with selection. Runtime schema checks still enforce actual compatibility. No audio is generated by this simulation.")
+        };
+      }
+      if (id === "voyager") {
+        const verified = s >= 3, stored = s >= 4;
+        return {
+          steps: [
+            ["The curriculum chooses a goal", "Given an early-game state, a plausible goal is to collect wood. Objectives respond to what the agent can currently do."],
+            ["Generate an action program", "The model writes a program using environment APIs and any relevant skills."],
+            ["Run it and read the feedback", state.executionFails ? "The authored first attempt cannot find a reachable tree. Execution feedback returns a failure, so the program cannot be stored as a successful skill." : "The authored attempt collects wood. The environment reports inventory change, which must still be verified."],
+            ["Repair if needed, then verify", state.executionFails ? "Add exploration before mining. The authored repaired attempt reaches a tree; a verification step checks that wood was collected." : "Check that the inventory contains the required wood. Success must be verified before library admission."],
+            ["Store a successful executable skill", "The successful program is indexed by a description embedding and added to the skill library. It is code, not merely a sentence of advice."],
+            ["Reuse it for the next goal", state.skillReuse ? "The curriculum proposes crafting a wooden pickaxe. Retrieve collectWood, then compose it with recipe and crafting operations." : "Without skill retrieval, the model must reconstruct wood collection. The task can still be solved, but the saved procedure is not being reused."]
+          ],
+          html: tweak(checkbox("executionFails", "First execution fails") + checkbox("skillReuse", "Retrieve stored skills for the next goal")) +
+            flow([node("Curriculum", s === 5 ? "Craft a wooden pickaxe" : "Collect wood", "Choose a task based on state and progress.", s === 0 || s === 5), node("Action program", s >= 3 && state.executionFails ? "Explore, then mine" : "Mine a tree", "Extended behavior is represented in code.", s === 1 || s === 3), node("Feedback + verification", verified ? "Goal verified" : s >= 2 ? (state.executionFails ? "Execution failed" : "Inventory changed") : "Not run yet", verified ? "Wood was collected; eligible to store." : "No verified skill admission yet.", s === 2 || s === 3)]) +
+            '<div class="split" style="margin-top:16px">' +
+            node("Executable skill library", stored ? "collectWood()" : "No collectWood skill stored yet", stored ? "Description embedding -> successful program" : "Failed and unverified programs are excluded. Verified code awaits library admission.", s === 4, !stored) +
+            node("Next program", s === 5 && state.skillReuse ? "Compose a saved skill" : "New task awaits", s === 5 ? (state.skillReuse ? "collectWood() -> craft planks, sticks and crafting table -> craft pickaxe" : "Regenerate wood collection -> crafting sequence") : "The library enables reuse across later goals.", s === 5) +
+            '</div>' + callout("This is a simplified Minecraft pipeline. All tasks, feedback, and success checks shown here are authored fixtures; no world or model is running.")
+        };
+      }
+      if (id === "autogen") {
+        const messages = [
+          ["Writer", "mean([2, 4, 6]) = sum(values) / 2"],
+          ["Executor", "Test failed: returned 6; expected 4. The divisor is wrong."],
+          ["Writer", "Revise: sum(values) / len(values)"],
+          ["Executor", "Test passed: (2 + 4 + 6) / 3 = 4"]
+        ];
+        const visible = Math.min(s, state.approval ? state.budget : 1);
+        const exhausted = state.approval && s > state.budget;
+        return {
+          steps: [
+            ["Configure roles and permissions", "The writer generates code. The executor runs tests. Human approval determines whether execution can begin."],
+            ["Writer sends the first attempt", "A message carries code to another role. A role need not be another language model."],
+            ["Executor replies with evidence", !state.approval ? "Execution is blocked by the missing approval. A confident writer message cannot override the permission boundary." : state.budget < 2 ? "The budget ended after the writer's message. No executor feedback was produced." : "A failed test returns concrete feedback. The message budget still limits the conversation."],
+            ["Writer revises using feedback", !state.approval ? "Without authorized execution, no test evidence exists to drive this revision." : state.budget < 3 ? "The budget ended before a revision could be sent. The conversation is incomplete." : "The writer corrects the divisor using the failed test. The revision still needs another execution test."],
+            ["Terminate on verified success or a limit", exhausted ? "The message budget was exhausted before a final passing test. Report incomplete work, not success." : state.approval ? "The final test passes for this fixture. Stop here; broader input coverage still needs more tests." : "No test ran. The requested workflow is incomplete until a human approves execution."]
+          ],
+          html: tweak(checkbox("approval", "Human approves this toy execution") + range("budget", "Message budget", 1, 4)) +
+            flow([node("LLM-backed role", "Writer", "Produces and revises code.", s === 1 || s === 3), node("Tool-backed role", "Executor", "Runs tests and replies.", s === 2 || s === 4), node("Human capability", "Approval", state.approval ? "Execution permitted" : "Execution blocked", s === 0)]) +
+            '<div style="margin-top:16px">' + (visible ? messages.slice(0, visible).map(([role, text]) => `<div class="message"><b>${role}</b><span class="mono">${text}</span></div>`).join("") : '<div class="empty">Advance to begin the conversation.</div>') + '</div>' +
+            callout(!state.approval && s >= 2 ? "<b>BLOCKED: no execution approval.</b> No test or revision based on execution feedback has occurred." : exhausted ? "<b>Budget exhausted.</b> A passing final test has not occurred. More conversation was stopped, not completed." : s === 4 ? "<b>Verified for the toy test.</b> Correctness comes from execution evidence, not from the agents agreeing." : "This simulation computes a simple mean and shows authored messages. It does not run generated code or a framework.")
+        };
+      }
+      if (id === "survey") {
+        const modules = {
+          profile: ["Profiling", "Who is acting?", "Role, attributes, constraints. Example: a room-finding assistant that may read availability but cannot book without approval."],
+          memory: ["Memory", "What state persists?", "Stored observations and retrieved experience. Example: room preferences and earlier failed room checks. Retain only what the task and policy justify."],
+          planning: ["Planning", "What should happen next?", "Task decomposition and strategy. Example: check Room A; if busy, query Room B; stop when availability is verified."],
+          action: ["Action", "What reaches the world?", "Tool or environment operations. Example: an authorized calendar query. Runtime permissions determine which calls are actually possible."]
+        };
+        return {
+          steps: [
+            ["Construction: locate the responsibilities", "Click the modules to connect an abstract taxonomy to a concrete agent. A module can be small or absent; the diagram is not a shopping list."],
+            ["Application: choose the relevant outcome", "For room finding, availability is the goal. For a social simulation, believability may matter. For code, passing appropriate tests matters."],
+            ["Evaluation: separate the dimensions", "Subjective and objective evaluations ask different questions. The engineering checks below extend the paper's framing to practical deployment."]
+          ],
+          html: '<div class="route-strip">' + Object.entries(modules).map(([key, [name, question]]) => `<button data-module="${key}" aria-pressed="${state.module === key}">${name}<small>${question}</small></button>`).join("") + '</div>' +
+            callout(`<b>${modules[state.module][0]}: ${modules[state.module][1]}</b><br>${modules[state.module][2]}`) +
+            '<div class="split" style="margin-top:16px">' + node("Subjective evaluation", "Was the behavior believable?", s >= 1 ? "A human judgment can assess realism or helpfulness. It does not establish that a booking happened." : "Choose an application before choosing a metric.", s === 1) +
+            node("Objective evaluation", "Did it accomplish the task?", s >= 2 ? "Inspect external state or tests. Also track unauthorized actions, cost, latency, and robustness as engineering checks." : "A convincing response is insufficient.", s === 2) + '</div>'
+        };
+      }
+      throw new Error(`No demo for ${id}`);
+    }
+    const comparisons = [
+      ["cot", "reason", "Make intermediate steps available in context.", "Prompt"],
+      ["react", "act", "Interleave decisions, actions, and observations.", "Loop"],
+      ["toolformer", "act", "Learn tool-call behavior from useful API-augmented training text.", "Weight updates"],
+      ["generative", "memory", "Retrieve experiences, infer higher-level memories, and plan.", "External memory"],
+      ["reflexion", "memory", "Retain a verbal lesson from feedback for the next trial.", "Text memory"],
+      ["tot", "reason", "Generate, evaluate, and search partial solution states.", "Search"],
+      ["hugging", "coordinate", "Route tasks to specialist models with artifact dependencies.", "Task graph"],
+      ["voyager", "memory", "Choose goals, refine programs, and reuse executable skills.", "Code library"],
+      ["autogen", "coordinate", "Configure roles and conversation-based control flow.", "Messages"],
+      ["survey", "map", "Classify construction, applications, and evaluation.", "Taxonomy"]
+    ];
+    const practice = [
+      { question: "A research assistant invents current store hours. What is the first missing capability?", options: ["More agents debating the hours", "A live source query and an observation-driven loop", "A larger memory of old hours"], correct: 1, explanation: "Use an external source and feed its response into the next decision, as in ReAct. More internal reasoning cannot establish a current external fact." },
+      { question: "A code agent repeats the same bug after every retry. Reliable tests already expose it. What would you add first?", options: ["A retained, specific failure lesson for the next trial", "A new role name", "A broader search tree before reading the failure"], correct: 0, explanation: "Reflexion's feedback-to-memory pattern directly addresses repeated failed attempts. A search tree may help some tasks, but should not replace learning from known evidence." },
+      { question: "A bounded puzzle has several plausible partial solutions. Which mechanism addresses early commitment?", options: ["Generative Agents' social simulation", "Tree of Thoughts' state evaluation and search", "Toolformer's API training filter"], correct: 1, explanation: "ToT explores alternatives and evaluates partial states. It is a fit only if the search budget and state evaluator are useful." },
+      { question: "A Minecraft agent repairs code successfully but rewrites the same procedure for later goals. What is missing?", options: ["More model parameters after every task", "A longer chat transcript alone", "A verified executable skill library with retrieval"], correct: 2, explanation: "Voyager preserves successful programs and retrieves them for reuse and composition. Reflexion's verbal notes alone are not the same artifact." },
+      { question: "Your model must learn tool-call behavior from a large corpus. You can execute candidate APIs and score continuation loss. Which paper is the closest recipe?", options: ["Toolformer", "AutoGen", "The survey"], correct: 0, explanation: "Toolformer filters self-generated API calls by prediction-loss reduction, then fine-tunes. The other two organize systems; they do not supply that training procedure." }
+    ];
+    function renderNav() {
+      const navLink = (lesson, i) => `<a class="nav-item" href="#lesson=${lesson.id}&amp;passed=${[...state.passed].join(",")}" data-lesson="${lesson.id}" ${state.lesson === lesson.id ? 'aria-current="page"' : ""}><span class="nav-number">${i === 0 ? "00" : String(i).padStart(2, "0")}</span>${lesson.name}${state.passed.has(lesson.id) ? '<span class="checkmark" aria-label="Knowledge check passed">OK</span>' : ""}</a>`;
+      document.getElementById("intro-nav").innerHTML = navLink(lessons[0], 0);
+      document.getElementById("paper-nav").innerHTML = lessons.slice(1).map((lesson, i) => navLink(lesson, i + 1)).join("");
+      document.getElementById("end-nav").innerHTML = `<a class="nav-item" data-lesson="synthesis" href="#lesson=synthesis" ${state.lesson === "synthesis" ? 'aria-current="page"' : ""}><span class="nav-number">+</span>Connect &amp; practice</a>`;
+      document.getElementById("chapter-select").innerHTML = routes.map((lesson, i) => `<option value="${lesson.id}" ${lesson.id === state.lesson ? "selected" : ""}>${i < 11 ? String(i).padStart(2, "0") + ". " : ""}${lesson.name}${state.passed.has(lesson.id) ? " (check passed)" : ""}</option>`).join("");
+      document.getElementById("progress-label").textContent = `${state.passed.size} / 11`;
+      document.getElementById("mobile-progress").textContent = `${state.passed.size} / 11`;
+      document.getElementById("progress").value = state.passed.size;
+    }
+    function labMarkup(lesson) {
+      const demo = getDemo(lesson.id);
+      return `<section class="lab" aria-label="${lesson.name} interactive demonstration">
+        <div class="lab-header"><h2>${lesson.lab}</h2><span class="small">Teaching simulation<br>No model calls</span></div>
+        <div class="lab-body" id="demo-body">${demo.html}</div>
+        <div class="caption" aria-live="polite" aria-atomic="true"><span class="step-num">${String(state.step + 1).padStart(2,"0")}</span><div><h3>${demo.steps[state.step][0]}</h3><p>${demo.steps[state.step][1]}</p></div></div>
+        <div class="lab-controls"><div class="buttons"><button data-step="back" ${state.step === 0 ? "disabled" : ""}>Back</button><button class="primary" data-step="next" ${state.step === demo.steps.length - 1 ? "disabled" : ""}>Next step</button><button data-step="reset">Reset steps</button></div><div class="step-dots" aria-label="Step ${state.step + 1} of ${demo.steps.length}">${demo.steps.map((_, i) => `<span ${i <= state.step ? 'class="on"' : ""}></span>`).join("")}</div></div>
+      </section>`;
+    }
+    function quizMarkup(lesson) {
+      const [question, options, correct, explanation, wrong] = lesson.quiz;
+      const selected = state.answers[lesson.id];
+      return `<section class="quiz" aria-labelledby="quiz-title"><div class="eyebrow">Test the mechanism</div><h2 id="quiz-title">Predict before you peek.</h2><p class="question">${question}</p><div class="options">${options.map((option, i) => `<button class="option" data-answer="${i}" aria-pressed="${selected === i}"><span>${String.fromCharCode(65+i)}</span>${option}</button>`).join("")}</div><div class="feedback" id="quiz-feedback" role="status">${selected === undefined ? "" : `<b>${selected === correct ? "Correct." : "Try again."}</b> ${selected === correct ? explanation : wrong}`}</div><details class="recall"><summary>Explain it from memory: ${lesson.recall}</summary><p>${lesson.recallAnswer}</p></details></section>`;
+    }
+    function footerMarkup() {
+      const index = routes.findIndex(l => l.id === state.lesson);
+      return `<div class="lesson-footer">${index > 0 ? `<button data-lesson="${routes[index-1].id}">&larr; ${routes[index-1].name}</button>` : "<span></span>"}${index < routes.length-1 ? `<button class="primary" data-lesson="${routes[index+1].id}">${routes[index+1].name} &rarr;</button>` : '<button data-lesson="foundations">Return to the foundations</button>'}</div>`;
+    }
+    function renderLesson() {
+      renderNav();
+      if (state.lesson === "synthesis") { renderSynthesis(); return; }
+      const lesson = lessons.find(l => l.id === state.lesson);
+      main.innerHTML = `<div class="eyebrow">${lesson.year ? "Paper " + String(lessons.indexOf(lesson)).padStart(2,"0") + " / " + lesson.year : "Begin with the system"}</div><h1 id="lesson-title" tabindex="-1">${lesson.title}</h1><p class="lead">${lesson.lead}</p><div class="meta"><span class="tag">${lesson.type}</span><span class="tag accent">${lesson.change}</span></div>
+        <div id="lab-container">${labMarkup(lesson)}</div>
+        <section class="principle"><h2>Build the idea from what must be true.</h2><div class="deduction">${lesson.principles.map(([title, text], i) => `<div><span class="number">0${i+1}</span><h3>${title}</h3><p>${text}</p></div>`).join("")}</div></section>
+        <div class="explain"><section><h2>${lesson.year ? "What the paper contributes" : "The system you are building"}</h2><p>${lesson.contribution}</p><h3>When to use the idea</h3><p>${lesson.use}</p></section><section class="limit"><h3>Where it can fail</h3><p>${lesson.failure}</p><h3>Keep the distinction</h3><p>${lesson.distinction}</p></section></div>
+        <details><summary>A minimal implementation sketch</summary><p>Pseudocode for the mechanism, not a production implementation or current framework API.</p>${code(lesson.code)}</details>
+        ${quizMarkup(lesson)}
+        <div class="source">${lesson.arxiv ? `Primary source: <a href="https://arxiv.org/abs/${lesson.arxiv}" target="_blank" rel="noopener noreferrer">${lesson.paper}</a><br>Read next: ${lesson.section}. First-submission year shown above. Mechanism verified against the original paper; demo scenarios, outputs, scores, and code sketches are teaching examples.` : 'This starting model is a teaching synthesis, informed by ReAct and the autonomous-agents survey. Original sources are linked in each paper lesson.'}</div>
+        ${footerMarkup()}`;
+    }
+    function comparisonMarkup() {
+      const filtered = comparisons.filter(([,category]) => state.filter === "all" || category === state.filter);
+      return filtered.map(([id, , mechanism, artifact]) => {
+        const lesson = lessons.find(l => l.id === id);
+        return `<div class="comparison-row"><a href="#lesson=${id}" data-lesson="${id}">${lesson.name}</a><span>${mechanism}</span><span>${artifact}</span></div>`;
+      }).join("");
+    }
+    function practiceMarkup() {
+      return practice.map((item, index) => `<section class="quiz"><div class="eyebrow">Design decision ${index+1}</div><h3>${item.question}</h3><div class="options">${item.options.map((option, answer) => `<button class="option" data-practice="${index}" data-choice="${answer}" aria-pressed="${state.practice[index] === answer}"><span>${String.fromCharCode(65+answer)}</span>${option}</button>`).join("")}</div><div class="feedback" role="status">${state.practice[index] === undefined ? "" : `<b>${state.practice[index] === item.correct ? "Correct." : "Reconsider the bottleneck."}</b> ${item.explanation}`}</div></section>`).join("");
+    }
+    function recallMarkup() {
+      const lesson = lessons[state.recallIndex];
+      return `<section class="quiz"><div class="eyebrow">Recall without multiple choice</div><h2>${lesson.name}</h2><p>${lesson.recall}</p>${state.recallRevealed ? `<div class="feedback">${lesson.recallAnswer}</div>` : ""}<div class="buttons" style="margin-top:16px"><button data-recall="reveal" ${state.recallRevealed ? "disabled" : ""}>Reveal a good answer</button><button data-recall="next">Next recall prompt &rarr;</button></div><p class="small" style="margin:12px 0 0">Say your answer aloud first. Recall is self-assessed and does not add a passed check.</p></section>`;
+    }
+    function renderSynthesis() {
+      const filters = [["all","All papers"],["reason","Reason"],["act","Act / tools"],["memory","Remember"],["coordinate","Coordinate"],["map","Classify"]];
+      main.innerHTML = `<div class="eyebrow">Connect the mechanisms</div><h1 id="lesson-title" tabindex="-1">Choose the mechanism<br>that fixes the bottleneck.</h1><p class="lead">These papers add different pieces to an agent system. You can combine them, but every added piece creates something else to test. Start with the task that fails, not the framework you want to use.</p>
+        <section class="lab"><div class="lab-header"><h2>A map, not a mandatory stack</h2><span class="small">Categories overlap</span></div><div class="lab-body"><div class="buttons">${filters.map(([value, name]) => `<button data-filter="${value}" aria-pressed="${state.filter === value}" ${state.filter === value ? 'class="primary"' : ""}>${name}</button>`).join("")}</div><div class="comparison" id="comparison">${comparisonMarkup()}</div></div></section>
+        <section class="principle"><h2>Keep these differences straight.</h2><div class="deduction"><div><span class="number">01</span><h3>Context is not weights</h3><p>CoT and Reflexion change what a fixed model sees. Toolformer fine-tunes the model. Voyager grows a library outside it.</p></div><div><span class="number">02</span><h3>Search is not collaboration</h3><p>ToT searches partial solutions. AutoGen coordinates roles through messages. HuggingGPT dispatches specialist models with dependencies.</p></div><div><span class="number">03</span><h3>Believable is not verified</h3><p>Generative Agents studies coherent simulated behavior. An action-oriented agent also needs evidence that its task succeeded.</p></div></div></section>
+        <section><h2>Design an assistant that finds a meeting room.</h2><p class="lead" style="font-size:17px">One possible composition, not an experiment from any paper: use a role and permitted tools, query availability, adapt to conflicts, and stop when the goal is verified.</p>
+        ${flow([node("Profile", "Read-only room finder", "Survey: make the role and action boundary explicit."), node("Loop", "Check and adapt", "ReAct: query rooms, observe conflicts, choose the next action."), node("Evaluation", "Verify availability", "An available room is the goal. Booking requires separate approval.")])}
+        <div class="callout">If retries repeat a known error, consider Reflexion. If a workflow becomes a reliable reusable program, consider a Voyager-style skill. A tiny room lookup does not automatically need ToT, model training, or a multi-agent conversation.</div></section>
+        <h2 style="margin-top:36px">Can you pick the right next change?</h2><div id="practice-container">${practiceMarkup()}</div>
+        <div id="recall-container">${recallMarkup()}</div>
+        <details style="margin-top:32px"><summary>The vocabulary, in ordinary words</summary><div class="glossary"><p><b>Context:</b> the information supplied to a model call, including prompt, history, and retrieved material.</p><p><b>Weights:</b> learned model parameters, changed by training rather than simply adding a new prompt.</p><p><b>Inference:</b> using a trained model to produce output.</p><p><b>Runtime:</b> the program that manages calls, permissions, tools, state, and stop conditions.</p><p><b>API:</b> a defined interface for calling another program or service.</p><p><b>Loss:</b> a measure of prediction error. For Toolformer's filter, lower continuation loss is better.</p><p><b>Embedding:</b> a numeric representation used to compare semantic similarity, such as matching a task to a skill description.</p><p><b>Heuristic:</b> an imperfect rule or estimate for choosing what to explore.</p><p><b>Curriculum:</b> a sequence of learning objectives selected for the agent's progress.</p><p><b>Ablation:</b> remove a component and measure what changes to investigate its contribution.</p></div></details>
+        <div class="source">Source scope: original papers first submitted in 2022 and 2023, checked for this guide on 12 October 2026. Sources and reading sections are in the individual lessons. No benchmark scores or current adoption claims are used. All demonstrations are deterministic, authored illustrations with no live model, API, or environment calls.</div>
+        ${footerMarkup()}`;
+    }
+    function saveRoute(replace = false) {
+      const hash = new URLSearchParams({ lesson: state.lesson, passed: [...state.passed].join(",") }).toString();
+      if (replace) history.replaceState(null, "", "#" + hash);
+      else if (location.hash.slice(1) !== hash) location.hash = hash;
+    }
+    function readRoute() {
+      if (location.hash === "#main") return;
+      const params = new URLSearchParams(location.hash.slice(1));
+      const id = params.get("lesson") || "foundations";
+      const valid = routes.some(l => l.id === id);
+      state.lesson = valid ? id : "foundations";
+      const allowed = new Set(lessons.map(l => l.id));
+      state.passed = new Set((params.get("passed") || "").split(",").filter(value => allowed.has(value)));
+      state.step = 0;
+      renderLesson();
+      if (!valid) {
+        const message = document.createElement("p");
+        message.className = "callout";
+        message.textContent = "That lesson link is not recognized. The foundations are shown instead.";
+        main.prepend(message);
+      }
+    }
+    function goToLesson(id) {
+      if (!routes.some(l => l.id === id)) throw new Error(`Unknown lesson: ${id}`);
+      state.lesson = id;
+      state.step = 0;
+      saveRoute();
+      renderLesson();
+      document.getElementById("lesson-title").focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+    function updateLab(focusSelector) {
+      const lesson = lessons.find(l => l.id === state.lesson);
+      document.getElementById("lab-container").innerHTML = labMarkup(lesson);
+      if (focusSelector) {
+        const target = document.querySelector(focusSelector);
+        if (target && !target.disabled) target.focus({ preventScroll: true });
+      }
+    }
+    document.addEventListener("click", event => {
+      const target = event.target.closest("button, a[data-lesson]");
+      if (!target) return;
+      if (target.dataset.lesson) {
+        event.preventDefault();
+        goToLesson(target.dataset.lesson);
+      } else if (target.dataset.step) {
+        const demo = getDemo(state.lesson);
+        state.step = target.dataset.step === "reset" ? 0 : target.dataset.step === "next" ? Math.min(state.step+1, demo.steps.length-1) : Math.max(state.step-1, 0);
+        const action = target.dataset.step;
+        const atEnd = state.step === demo.steps.length - 1, atStart = state.step === 0;
+        updateLab(`[data-step="${action === "next" && atEnd ? "back" : action === "back" && atStart ? "next" : action}"]`);
+      } else if (target.dataset.branch) {
+        state.branch = target.dataset.branch;
+        state.step = Math.min(state.step, 1);
+        updateLab(`[data-branch="${state.branch}"]`);
+      } else if (target.dataset.module) {
+        state.module = target.dataset.module;
+        updateLab(`[data-module="${state.module}"]`);
+      } else if (target.dataset.answer !== undefined) {
+        const answer = Number(target.dataset.answer), lesson = lessons.find(l => l.id === state.lesson);
+        state.answers[lesson.id] = answer;
+        if (answer === lesson.quiz[2]) { state.passed.add(lesson.id); saveRoute(true); renderNav(); }
+        const quiz = target.closest(".quiz");
+        quiz.querySelectorAll("[data-answer]").forEach(button => button.setAttribute("aria-pressed", String(Number(button.dataset.answer) === answer)));
+        document.getElementById("quiz-feedback").innerHTML = `<b>${answer === lesson.quiz[2] ? "Correct." : "Try again."}</b> ${answer === lesson.quiz[2] ? lesson.quiz[3] : lesson.quiz[4]}`;
+      } else if (target.dataset.filter) {
+        state.filter = target.dataset.filter;
+        renderSynthesis();
+        document.querySelector(`[data-filter="${state.filter}"]`).focus({ preventScroll: true });
+      } else if (target.dataset.practice !== undefined) {
+        const index = Number(target.dataset.practice), choice = Number(target.dataset.choice), item = practice[index], quiz = target.closest(".quiz");
+        state.practice[index] = choice;
+        quiz.querySelectorAll("[data-choice]").forEach(button => button.setAttribute("aria-pressed", String(Number(button.dataset.choice) === choice)));
+        quiz.querySelector(".feedback").innerHTML = `<b>${choice === item.correct ? "Correct." : "Reconsider the bottleneck."}</b> ${item.explanation}`;
+      } else if (target.dataset.recall) {
+        if (target.dataset.recall === "next") { state.recallIndex = (state.recallIndex+1) % lessons.length; state.recallRevealed = false; }
+        else state.recallRevealed = true;
+        document.getElementById("recall-container").innerHTML = recallMarkup();
+        document.querySelector('[data-recall="next"]').focus({ preventScroll: true });
+      }
+    });
+    document.addEventListener("change", event => {
+      const input = event.target;
+      const key = input.dataset.state;
+      if (!key) return;
+      if (input.type === "checkbox") state[key] = input.checked;
+      else if (input.type === "range") state[key] = Number(input.value);
+      else state[key] = input.value;
+      updateLab(`#${input.id}`);
+    });
+    document.addEventListener("input", event => {
+      const input = event.target;
+      if (input.type === "range" && input.dataset.state) {
+        document.getElementById(`${input.id}-value`).textContent = input.value;
+      }
+    });
+    document.getElementById("chapter-select").addEventListener("change", event => goToLesson(event.target.value));
+    document.getElementById("map-button").addEventListener("click", () => goToLesson("synthesis"));
+    function themeLabel() {
+      const dark = document.documentElement.dataset.theme === "dark";
+      document.getElementById("theme-button").textContent = dark ? "Light" : "Dark";
+      document.getElementById("theme-button").setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} theme`);
+    }
+    document.getElementById("theme-button").addEventListener("click", () => {
+      const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = theme;
+      const url = new URL(location.href);
+      url.searchParams.set("scoutTheme", theme);
+      history.replaceState(null, "", url);
+      themeLabel();
+    });
+    window.addEventListener("hashchange", () => {
+      readRoute();
+      const heading = document.getElementById("lesson-title");
+      if (heading && location.hash !== "#main") heading.focus({ preventScroll: true });
+    });
+    readRoute();
+    themeLabel();
+  </script>
+</body>
+</html>
